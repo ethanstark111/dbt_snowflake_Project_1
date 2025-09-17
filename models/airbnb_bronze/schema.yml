@@ -1,0 +1,71 @@
+version: 2
+
+sources:
+  - name: airbnb_bronze
+    database: airbnb
+    schema: source_schema
+    tables:
+      - name: listings
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+      - name: hosts
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+      - name: reviews
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+
+models:
+  - name: listings_model
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+
+      - name: room_type
+        tests:
+          - accepted_values:
+              values:
+                - Shared room
+                - Hotel room
+                - Private room
+                - Entire home/apt
+
+      - name: host_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hosts_model')
+              field: id
+
+  - name: hosts_model
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+
+  - name: reviews_model
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('listings_model')
+              field: id
