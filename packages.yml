@@ -1,0 +1,10 @@
+packages:
+  - package: dbt-labs/dbt_utils
+    version:
+      - 1.3.0
+
+  # Package available on github.com/calogica/dbt_expectations repository
+  # it has pre defined set of tests which we can apply on models, model columns etc.
+
+  - package: calogica/dbt_expectations
+    version: ['>=0.10.0', "<0.11.0"]
