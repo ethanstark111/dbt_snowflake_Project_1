@@ -36,7 +36,11 @@ models:
       - name: id
         tests:
           - unique
-          - not_null
+          - not_null\
+      
+      - name: minimum_nights
+        tests: 
+          - check_all_positive_numbers
 
       - name: room_type
         tests:
