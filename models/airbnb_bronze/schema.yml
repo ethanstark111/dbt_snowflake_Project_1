@@ -1,0 +1,139 @@
+version: 2
+
+sources:
+  - name: airbnb_bronze
+    database: airbnb
+    schema: source_schema
+    tables:
+      - name: listings
+        columns:
+          - name: price
+            tests:
+              - dbt_expectations.expect_column_values_to_match_regex:
+                  # 4 slashes explaination is given in book
+                  regex: "^\\\\$[0-9][0-9\\.]+$"
+                  # equalant snowflake regex is "^\\$[0-9][0-9\.]"
+                  # \ is added to remove speacial meaning
+
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+      - name: hosts
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+      - name: reviews
+        freshness:
+          error_after:
+            count: 10
+            period: day
+          warn_after:
+            count: 1
+            period: hour
+
+models:
+  - name: listings_model
+
+    # here we are testing the test in dbt_labs/dbt_utils package, hence we are comparing row count with same model as we dont want to throw error. 
+    # If we mention some other model name, it might throw error if row count is not same. 
+    tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('listings_model')
+
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+      
+      - name: minimum_nights
+        tests: 
+          - check_all_positive_numbers
+
+      - name: room_type
+        tests:
+          - accepted_values:
+              values:
+                - Shared room
+                - Hotel room
+                - Private room
+                - Entire home/apt
+
+      - name: host_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hosts_model')
+              field: id
+
+  - name: hosts_model
+    columns:
+      - name: id
+        tests:
+          - unique
+          - not_null
+
+  - name: reviews_model
+    columns:
+      - name: listing_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('listings_model')
+              field: id
+
+
+  - name: dim_listings_w_hosts
+    description: user created model to check pre,post hooks, this is table listing inner join hosts
+    tests:
+    # test 1
+    # Here we are comparing row count of current model with mentioned source in compare_model
+      - dbt_expectations.expect_table_row_count_to_equal_other_table:
+          compare_model: source('source_schema', 'listings')
+          # compare_model: ref(''listings_model')
+
+    columns:
+      - name: price
+        tests:
+        # test 2
+        # Looking for outliers
+        # This test checks wheather 99% of the values of price column are inclusive between 0 and 500
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              quantile: .99
+              min_value: 0
+              max_value: 500
+
+        # test 3
+        # By dafault severity for test is 'error', we will change it to 'warn'
+          - dbt_expectations.expect_column_max_to_be_between:
+              max_value: 500
+              config:
+                severity: warn
+
+        # test 4
+        # validating column type
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: number
+              config:
+                severity: warn
+
+      - name: room_type
+        #test 5
+        # check if column has exact 4 distinct values 
+        tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal:
+              value: 4
+              # by default severity is error
+              config:
+                severity: error
+
+

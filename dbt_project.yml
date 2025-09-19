@@ -38,10 +38,11 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   dbt_snowflake_Project_1:
     airbnb_bronze:
-      +materialized: view
+      +materialized: table
       +schema: silver
 
-  my_new_project:
-    # Applies to all files under models/example/
-    example:
-      +materialized: table
+
+vars:
+  name: Tony Stark
+
+
