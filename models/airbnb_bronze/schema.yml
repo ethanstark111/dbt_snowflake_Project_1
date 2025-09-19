@@ -6,12 +6,14 @@ sources:
     schema: source_schema
     tables:
       - name: listings
-        tests:
-          - dbt_expectations.expect_column_value_to_match_regex:
-              # 4 slashes explaination is given in book
-              regex: "^\\\\$[0-9][0-9\\.]+$"
-              # equalant snowflake regex is "^\\$[0-9][0-9\.]"
-              # \ is added to remove speacial meaning
+        columns:
+          - name: price
+            tests:
+              - dbt_expectations.expect_column_values_to_match_regex:
+                  # 4 slashes explaination is given in book
+                  regex: "^\\\\$[0-9][0-9\\.]+$"
+                  # equalant snowflake regex is "^\\$[0-9][0-9\.]"
+                  # \ is added to remove speacial meaning
 
         freshness:
           error_after:

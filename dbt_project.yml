@@ -42,3 +42,7 @@ models:
       +schema: silver
 
 
+vars:
+  name: Tony Stark
+
+
